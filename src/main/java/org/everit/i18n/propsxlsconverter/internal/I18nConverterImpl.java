@@ -17,6 +17,8 @@ package org.everit.i18n.propsxlsconverter.internal;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -40,7 +42,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.everit.i18n.propsxlsconverter.I18nConverter;
 import org.everit.i18n.propsxlsconverter.internal.dto.PropKeyRowNumberDTO;
 import org.everit.i18n.propsxlsconverter.internal.dto.WorkbookRowDTO;
@@ -154,10 +155,9 @@ public class I18nConverterImpl implements I18nConverter {
         while ((line = br.readLine()) != null) {
           // ignore empty and comment lines
           if (!"".equals(line) && (line.charAt(0) != '#')) {
-            String unescapedLine = StringEscapeUtils.unescapeJava(line);
-            int separatorIndex = getPropertySeparatorIndex(unescapedLine);
-            String propKey = unescapedLine.substring(0, separatorIndex);
-            String propValue = unescapedLine.substring(separatorIndex + 1);
+            int separatorIndex = getPropertySeparatorIndex(line);
+            String propKey = line.substring(0, separatorIndex);
+            String propValue = unescapeString(line.substring(separatorIndex + 1));
 
             insertOrUpdateWorkbookRow(workbookWriter, lang, fileAccess, propKey, propValue);
           }
@@ -438,7 +438,7 @@ public class I18nConverterImpl implements I18nConverter {
           String propValue = value.getProperty(propKey);
           sb.append(propKey);
           sb.append("=");
-          sb.append(StringEscapeUtils.escapeJava(propValue));
+          sb.append(escapeString(propValue));
           sb.append("\n");
         });
 
@@ -452,5 +452,43 @@ public class I18nConverterImpl implements I18nConverter {
     });
 
     propKeySequence.clear();
+  }
+
+  protected String unescapeString(String s) throws IOException {
+
+    String stripped = s
+            .replaceAll("^'([^'])", "$1")
+            .replaceAll("([^'])'$", "$1")
+            .replaceAll("([^'])'([^'])", "$1$2");
+    InputStreamReader i = new InputStreamReader(new ByteArrayInputStream(("a=" + stripped).getBytes("UTF-8")), "UTF-8");
+
+    Properties p = new Properties();
+    p.load(i);
+    String value = p.getProperty("a");
+
+    return value.replaceAll("''", "'");
+
+  }
+
+  protected String escapeString(String s) {
+    try {
+      Properties p = new Properties();
+
+      p.setProperty("a", s) ;
+      ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+      OutputStreamWriter out = new OutputStreamWriter(outBytes, "UTF-8");
+      p.store(out, "");
+      out.close();
+      String value = new String(outBytes.toByteArray(), "UTF-8").substring(35).trim();
+      String escaped = value
+              .replaceAll("'", "''")
+              .replaceAll("([^}])(\\{\\{?\\{)", "$1'$2")
+              .replaceAll("^(\\{\\{?\\{)", "'$1")
+              .replaceAll("(}}?})([^}{])", "$1'$2")
+              .replaceAll("(}}?})$", "$1'");
+      return escaped;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
