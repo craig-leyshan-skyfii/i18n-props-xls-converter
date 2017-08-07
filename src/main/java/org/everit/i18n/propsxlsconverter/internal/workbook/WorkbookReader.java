@@ -56,7 +56,7 @@ public class WorkbookReader extends AbstractWorkbook {
   /**
    * Get next row in the sheet. Read rows between second to last row.
    *
-   * @return the {@link WorkbookRowDTO}.
+   * @return the {@link WorkbookRowDTO} or null if the row is empty
    */
   public WorkbookRowDTO getNextRow() {
     if (sheet == null) {
@@ -65,6 +65,10 @@ public class WorkbookReader extends AbstractWorkbook {
 
     HSSFRow row = sheet.getRow(rowNumber++);
     HSSFCell propertiesFileNameCell = row.getCell(COLUMN_PROPERTIES_FILE_NAME);
+    if (propertiesFileNameCell == null) {
+      return null;
+    }
+
     String propertiesFileName = propertiesFileNameCell.getStringCellValue();
 
     HSSFCell propKeyCell = row.getCell(COLUMN_PROPERTY_KEY);
@@ -80,7 +84,7 @@ public class WorkbookReader extends AbstractWorkbook {
     return new WorkbookRowDTO()
         .propertiesFile(propertiesFileName)
         .propKey(propKeyCell.getStringCellValue())
-        .defaultLangValue(defaultLangCell.getStringCellValue())
+        .defaultLangValue(defaultLangCell == null ? "" : defaultLangCell.getStringCellValue())
         .langValues(langValues);
   }
 

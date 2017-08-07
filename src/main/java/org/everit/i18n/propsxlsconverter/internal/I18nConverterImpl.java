@@ -57,6 +57,8 @@ public class I18nConverterImpl implements I18nConverter {
 
   private static final String UNDERLINE = "_";
 
+  private static final String DOT = ".";
+
   /**
    * Map key is fileAccces.
    */
@@ -82,7 +84,7 @@ public class I18nConverterImpl implements I18nConverter {
       final int lastIndexOf) {
     String fileNameFirstPart = fileName.substring(0, lastIndexOf);
     String fileNameSecondPart = fileName.substring(lastIndexOf + searchLang.length());
-    return fileNameFirstPart + fileNameSecondPart;
+    return fileNameFirstPart + DOT + fileNameSecondPart;
   }
 
   /**
@@ -100,7 +102,7 @@ public class I18nConverterImpl implements I18nConverter {
 
     String fileName = languageFile.getName();
     for (String lang : languages) {
-      String searchLang = UNDERLINE + lang;
+      String searchLang = UNDERLINE + lang + DOT;
       int lastIndexOf = fileName.lastIndexOf(searchLang);
       if (lastIndexOf > -1) {
         String defaultLangFileName = calculateDefaultLangFileName(fileName,
@@ -209,7 +211,7 @@ public class I18nConverterImpl implements I18nConverter {
    */
   private String getLanguage(final String fileName, final String[] languages) {
     for (String lang : languages) {
-      if (fileName.contains(UNDERLINE + lang)) {
+      if (fileName.contains(UNDERLINE + lang + DOT)) {
         return lang;
       }
     }
@@ -270,6 +272,10 @@ public class I18nConverterImpl implements I18nConverter {
     int lastRowNumber = workbookReader.getLastRowNumber();
     for (int i = 1; i <= lastRowNumber; i++) {
       WorkbookRowDTO nextRow = workbookReader.getNextRow();
+
+      if (nextRow == null) {
+        continue;
+      }
 
       if (prevPropertiesFile == null) {
         prevPropertiesFile = nextRow.propertiesFile;
