@@ -488,7 +488,7 @@ public class I18nConverterImpl implements I18nConverter {
       String value = new String(outBytes.toByteArray(), "UTF-8").substring(35).trim();
       String escaped = value
               .replaceAll("'", "''")
-              .replaceAll("([^}])(\\{\\{?\\{)", "$1'$2")
+              .replaceAll("([^}{])(\\{\\{?\\{)", "$1'$2")
               .replaceAll("^(\\{\\{?\\{)", "'$1")
               .replaceAll("(}}?})([^}{])", "$1'$2")
               .replaceAll("(}}?})$", "$1'");
